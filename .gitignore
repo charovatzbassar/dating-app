@@ -330,3 +330,5 @@ api/*.btp.cs
 api/*.btm.cs
 api/*.odx.cs
 api/*.xsd.cs
+api/appsettings.json
+api/appsettings.Development.json
