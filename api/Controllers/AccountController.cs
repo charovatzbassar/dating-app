@@ -49,9 +49,11 @@ public class AccountController(DataContext context, ITokenService tokenService) 
             return Unauthorized("Invalid username");
         }
 
-        var user = await context.Users.FirstOrDefaultAsync(x =>
-            x.Username == loginDTO.Username.ToLower()
-        );
+        var user = await context.Users
+            .Include(x => x.Photos)
+            .FirstOrDefaultAsync(x =>
+                x.Username == loginDTO.Username.ToLower()
+            );
 
         if (user == null)
         {
@@ -73,7 +75,8 @@ public class AccountController(DataContext context, ITokenService tokenService) 
         return Ok(new UserDTO
         {
             Username = user.Username,
-            Token = tokenService.CreateToken(user)
+            Token = tokenService.CreateToken(user),
+            PhotoUrl = user.Photos.FirstOrDefault(x => x.IsMain)?.Url
         });
     }
 
