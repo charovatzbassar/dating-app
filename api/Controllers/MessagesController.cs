@@ -5,10 +5,12 @@ using api.Extensions;
 using api.Helpers;
 using api.Interfaces;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace api.Controllers;
 
+[Authorize]
 public class MessagesController(IMessageRepository messageRepository, IUserRepository userRepository, IMapper mapper) : BaseApiController
 {
     [HttpPost]
@@ -57,5 +59,29 @@ public class MessagesController(IMessageRepository messageRepository, IUserRepos
         var currentUsername = User.GetUsername();
 
         return Ok(await messageRepository.GetMessageThread(currentUsername, username));
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<ActionResult> DeleteMessage(int id)
+    {
+        var username = User.GetUsername();
+
+        var message = await messageRepository.GetMessage(id);
+
+        if (message == null) return BadRequest("Message does not exist");
+
+        if (message.SenderUsername != username && message.RecipientUsername != username) return Forbid("You are not allowed to do that.");
+
+        if (message.SenderUsername == username) message.SenderDeleted = true;
+        if (message.RecipientUsername == username) message.RecipientDeleted = true;
+
+        if (message is { SenderDeleted: true, RecipientDeleted: true }) // same as message.SenderDeleted && message.RecipientDeleted
+        {
+            messageRepository.DeleteMessage(message);
+        }
+
+        if (await messageRepository.SaveAllAsync()) return Ok();
+
+        return BadRequest("Error deleting message.");
     }
 }
