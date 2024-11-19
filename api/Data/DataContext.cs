@@ -1,18 +1,39 @@
 using System;
 using api.Entities;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace api.Data;
 
-public class DataContext(DbContextOptions options) : DbContext(options)
+public class DataContext(DbContextOptions options)
+:
+IdentityDbContext<AppUser,
+AppRole, int,
+IdentityUserClaim<int>,
+AppUserRole,
+IdentityUserLogin<int>,
+IdentityRoleClaim<int>,
+IdentityUserToken<int>>(options)
 {
-    public DbSet<AppUser> Users { get; set; }
     public DbSet<UserLike> Likes { get; set; }
     public DbSet<Message> Messages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<AppUser>()
+            .HasMany(ur => ur.UserRoles)
+            .WithOne(u => u.User)
+            .HasForeignKey(ur => ur.UserId)
+            .IsRequired();
+
+        modelBuilder.Entity<AppRole>()
+            .HasMany(ur => ur.UserRoles)
+            .WithOne(u => u.Role)
+            .HasForeignKey(ur => ur.RoleId)
+            .IsRequired();
 
         modelBuilder.Entity<UserLike>()
             .HasKey(k => new { k.SourceUserId, k.TargetUserId });
@@ -34,7 +55,7 @@ public class DataContext(DbContextOptions options) : DbContext(options)
             .HasOne(x => x.Recipient)
             .WithMany(x => x.MessagesReceived)
             .OnDelete(DeleteBehavior.Restrict); // when we delete a user, the messages will not be deleted.
-    
+
         modelBuilder.Entity<Message>()
             .HasOne(x => x.Sender)
             .WithMany(x => x.MessagesSent)

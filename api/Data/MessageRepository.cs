@@ -33,9 +33,9 @@ public class MessageRepository(DataContext context, IMapper mapper) : IMessageRe
 
         query = messageParams.Container switch
         {
-            "Inbox" => query.Where(x => x.Recipient.Username == messageParams.Username && !x.RecipientDeleted),
-            "Outbox" => query.Where(x => x.Sender.Username == messageParams.Username && !x.SenderDeleted),
-            _ => query.Where(x => x.Recipient.Username == messageParams.Username && x.DateRead == null && !x.RecipientDeleted)
+            "Inbox" => query.Where(x => x.Recipient.UserName == messageParams.Username && !x.RecipientDeleted),
+            "Outbox" => query.Where(x => x.Sender.UserName == messageParams.Username && !x.SenderDeleted),
+            _ => query.Where(x => x.Recipient.UserName == messageParams.Username && x.DateRead == null && !x.RecipientDeleted)
         };
 
         var messages = query.ProjectTo<MessageDTO>(mapper.ConfigurationProvider);

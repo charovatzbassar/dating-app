@@ -23,14 +23,14 @@ public class MessagesController(IMessageRepository messageRepository, IUserRepos
         var sender = await userRepository.GetUserByUsernameAsync(username);
         var recipient = await userRepository.GetUserByUsernameAsync(createMessageDTO.RecipientUsername);
 
-        if (recipient == null || sender == null) return BadRequest("Cannot send message right now");
+        if (recipient == null || sender == null || sender.UserName == null || recipient.UserName == null) return BadRequest("Cannot send message right now");
 
         var message = new Message
         {
             Sender = sender,
             Recipient = recipient,
-            SenderUsername = sender.Username,
-            RecipientUsername = recipient.Username,
+            SenderUsername = sender.UserName,
+            RecipientUsername = recipient.UserName,
             Content = createMessageDTO.Content
         };
 

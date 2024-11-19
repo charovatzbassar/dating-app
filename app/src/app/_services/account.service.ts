@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { User } from '../_models/user.model';
 import { map } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -13,6 +13,16 @@ export class AccountService {
   private likeService = inject(LikesService);
   private baseUrl: string = environment.apiUrl;
   public currentUser = signal<User | null>(null);
+  roles = computed(() => {
+    const user = this.currentUser();
+
+    if (user && user.token) {
+      const role = JSON.parse(atob(user.token.split('.')[1])).role;
+      return Array.isArray(role) ? role : [role];
+    }
+
+    return null;
+  });
 
   login(model: any) {
     return this.http.post<User>(this.baseUrl + 'account/login', model).pipe(

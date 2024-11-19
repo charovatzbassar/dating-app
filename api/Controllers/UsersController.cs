@@ -81,7 +81,7 @@ public class UsersController(
         {
             return CreatedAtAction(nameof(GetUser), new
             {
-                username = user.Username
+                username = user.UserName
             }, mapper.Map<PhotoDTO>(photo));
             // Better to return 201 
         }
