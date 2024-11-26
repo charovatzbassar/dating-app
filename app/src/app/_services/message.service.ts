@@ -10,6 +10,8 @@ import {
   HubConnectionState,
 } from '@microsoft/signalr';
 import { User } from '../_models/user.model';
+import { group } from '@angular/animations';
+import { Group } from '../_models/group.model';
 
 @Injectable({
   providedIn: 'root',
@@ -19,7 +21,7 @@ export class MessageService {
   hubUrl = environment.hubsUrl;
   private http = inject(HttpClient);
   paginatedResult = signal<PaginatedResult<Message[]> | null>(null);
-  private hubConnection?: HubConnection;
+  hubConnection?: HubConnection;
   messageThread = signal<Message[]>([]);
 
   createHubConnection(user: User, otherUsername: string) {
@@ -38,6 +40,19 @@ export class MessageService {
 
     this.hubConnection.on('NewMessage', (message) => {
       this.messageThread.update((messages) => [...messages, message]);
+    });
+
+    this.hubConnection.on('UpdatedGroup', (group: Group) => {
+      if (group.connections.some((x) => x.username === otherUsername)) {
+        this.messageThread.update((messages) => {
+          messages.forEach((message) => {
+            if (!message.dateRead) {
+              message.dateRead = new Date(Date.now());
+            }
+          });
+          return messages;
+        });
+      }
     });
   }
 
