@@ -23,7 +23,7 @@ public class UserRepository(DataContext context, IMapper mapper) : IUserReposito
     {
         var query = context.Users.AsQueryable();
 
-        query = query.Where(x => x.UserName != userParams.CurrentUsername);
+        query = GetFilteredUsers(query, userParams, applyPhotoFilter: true);
 
         if (userParams.Gender != null)
         {
@@ -67,4 +67,40 @@ public class UserRepository(DataContext context, IMapper mapper) : IUserReposito
     {
         context.Entry(user).State = EntityState.Modified;
     }
+
+    private IQueryable<AppUser> GetFilteredUsers(IQueryable<AppUser> query, UserParams userParams, bool applyPhotoFilter)
+{
+    return query
+        .Where(x => x.UserName != userParams.CurrentUsername)
+        .Select(x => new AppUser
+        {
+            UserName = x.UserName,
+            DateOfBirth = x.DateOfBirth,
+            Interests = x.Interests,
+            KnownAs = x.KnownAs,
+            City = x.City,
+            Country = x.Country,
+            PasswordHash = x.PasswordHash,
+            PhoneNumber = x.PhoneNumber,
+            AccessFailedCount = x.AccessFailedCount,
+            LastActive = x.LastActive,
+            Email = x.Email,
+            ConcurrencyStamp = x.ConcurrencyStamp,
+            Created = x.Created,
+            EmailConfirmed = x.EmailConfirmed,
+            Introduction = x.Introduction,
+            LockoutEnabled = x.LockoutEnabled,
+            LockoutEnd = x.LockoutEnd,
+            LookingFor = x.LookingFor,
+            NormalizedEmail = x.NormalizedEmail,
+            NormalizedUserName = x.NormalizedUserName,
+            PhoneNumberConfirmed = x.PhoneNumberConfirmed,
+            SecurityStamp = x.SecurityStamp,
+            TwoFactorEnabled = x.TwoFactorEnabled,
+            Gender = x.Gender,
+            Photos = applyPhotoFilter
+                ? x.Photos.Where(p => p.IsApproved).ToList()
+                : x.Photos.ToList()
+        });
+}
 }
