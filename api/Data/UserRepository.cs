@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using api.DTO;
 using api.Entities;
 using api.Helpers;
@@ -11,9 +12,16 @@ namespace api.Data;
 
 public class UserRepository(DataContext context, IMapper mapper) : IUserRepository
 {
-    public async Task<MemberDTO?> GetMemberAsync(string username)
+    public async Task<MemberDTO?> GetMemberAsync(string username, string currentUsername)
     {
-        return await context.Users
+        var query = context.Users.AsQueryable();
+        Console.WriteLine(currentUsername + " " + username);
+        if (username != currentUsername && currentUsername != "admin")
+        {
+            query = GetFilteredUsers(query);
+        }
+
+        return await query
         .Where(x => x.UserName == username)
         .ProjectTo<MemberDTO>(mapper.ConfigurationProvider)
         .SingleOrDefaultAsync();
@@ -23,7 +31,7 @@ public class UserRepository(DataContext context, IMapper mapper) : IUserReposito
     {
         var query = context.Users.AsQueryable();
 
-        query = GetFilteredUsers(query, userParams, applyPhotoFilter: true);
+        query = GetFilteredUsers(query);
 
         if (userParams.Gender != null)
         {
@@ -33,7 +41,9 @@ public class UserRepository(DataContext context, IMapper mapper) : IUserReposito
         var minDob = DateOnly.FromDateTime(DateTime.Today.AddYears(-userParams.MaxAge - 1));
         var maxDob = DateOnly.FromDateTime(DateTime.Today.AddYears(-userParams.MinAge));
 
-        query = query.Where(x => x.DateOfBirth >= minDob && x.DateOfBirth <= maxDob);
+        query = query
+            .Where(x => x.DateOfBirth >= minDob && x.DateOfBirth <= maxDob)
+            .Where(x => x.UserName != userParams.CurrentUsername);
 
         query = userParams.OrderBy switch
         {
@@ -68,10 +78,9 @@ public class UserRepository(DataContext context, IMapper mapper) : IUserReposito
         context.Entry(user).State = EntityState.Modified;
     }
 
-    private IQueryable<AppUser> GetFilteredUsers(IQueryable<AppUser> query, UserParams userParams, bool applyPhotoFilter)
+    private IQueryable<AppUser> GetFilteredUsers(IQueryable<AppUser> query)
 {
     return query
-        .Where(x => x.UserName != userParams.CurrentUsername)
         .Select(x => new AppUser
         {
             UserName = x.UserName,
@@ -98,9 +107,7 @@ public class UserRepository(DataContext context, IMapper mapper) : IUserReposito
             SecurityStamp = x.SecurityStamp,
             TwoFactorEnabled = x.TwoFactorEnabled,
             Gender = x.Gender,
-            Photos = applyPhotoFilter
-                ? x.Photos.Where(p => p.IsApproved).ToList()
-                : x.Photos.ToList()
+            Photos = x.Photos.Where(p => p.IsApproved == true).ToList()
         });
 }
 }

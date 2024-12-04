@@ -33,7 +33,7 @@ public class UsersController(
     [HttpGet("{username}")]
     public async Task<ActionResult<MemberDTO>> GetUser(string username)
     {
-        var user = await unitOfWork.UserRepository.GetMemberAsync(username);
+        var user = await unitOfWork.UserRepository.GetMemberAsync(username, User.GetUsername());
 
         if (user == null) return NotFound();
 
@@ -70,10 +70,9 @@ public class UsersController(
         var photo = new Photo
         {
             Url = result.SecureUrl.AbsoluteUri,
-            PublicId = result.PublicId
+            PublicId = result.PublicId,
+            IsApproved = null,
         };
-
-        if (user.Photos.Count == 0) photo.IsMain = true;
 
         user.Photos.Add(photo);
 
@@ -98,7 +97,7 @@ public class UsersController(
 
         var photo = user.Photos.FirstOrDefault(x => x.Id == photoId);
 
-        if (photo == null || photo.IsMain) return BadRequest("This is your main photo, or it does not exist");
+        if (photo == null || photo.IsMain || photo.IsApproved == null || photo.IsApproved == false) return BadRequest("This is your main photo, or it does not exist");
 
         var currentMain = user.Photos.FirstOrDefault(x => x.IsMain);
 

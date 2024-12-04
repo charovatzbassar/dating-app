@@ -1,5 +1,7 @@
 using System;
 using api.Entities;
+using api.Interfaces;
+using CloudinaryDotNet.Actions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace api.Controllers;
 
-public class AdminController(UserManager<AppUser> userManager) : BaseApiController
+public class AdminController(UserManager<AppUser> userManager, IUnitOfWork unitOfWork) : BaseApiController
 {
     [Authorize(Policy = "RequireAdminRole")]
     [HttpGet("users-with-roles")]
@@ -48,9 +50,45 @@ public class AdminController(UserManager<AppUser> userManager) : BaseApiControll
     }
 
     [Authorize(Policy = "ModeratePhotoRole")]
-    [HttpGet("photos-to-moderate")]
-    public ActionResult GetPhotosForModeration()
+    [HttpGet("photos-to-approve")]
+    public async Task<ActionResult<List<Photo>>> GetPhotosForApproval([FromQuery] string username)
     {
-        return Ok("Admins or moderators can see this.");
+        var user = await unitOfWork.UserRepository.GetUserByUsernameAsync(username);
+
+        if (user == null) return BadRequest("No user found");
+
+        var photosForApproval = await unitOfWork.PhotoRepository.GetUnapprovedPhotos(user.UserName!);
+
+        if (photosForApproval == null) return BadRequest("There are no photos to approve.");
+
+        return Ok(photosForApproval);
+    }
+
+    [Authorize(Policy = "ModeratePhotoRole")]
+    [HttpPut("moderate-photo/{username}/{photoId}")]
+    public async Task<ActionResult<bool>> ModeratePhoto(string username, int photoId, [FromQuery] string action)
+    {
+        var user = await unitOfWork.UserRepository.GetUserByUsernameAsync(username);
+
+        if (user == null) return BadRequest("No user found");
+
+        var photo = user.Photos.Find(x => x.Id == photoId);
+
+        if (photo == null) return BadRequest("Photo not found");
+
+        switch (action)
+        {
+            case "APPROVE":
+                photo.IsApproved = true;
+                if (user.Photos.Count == 1) photo.IsMain = true;
+                break;
+            case "REJECT":
+                photo.IsApproved = false;
+                break;
+            default:
+                return BadRequest("This action is not supported.");
+        }
+
+        return Ok(await unitOfWork.Complete());
     }
 }

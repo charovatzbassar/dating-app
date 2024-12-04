@@ -18,6 +18,12 @@ var builder = WebApplication.CreateBuilder(args);
 // use the extensions
 builder.Services.AddApplicationServices(builder.Configuration);
 builder.Services.AddIdentityServices(builder.Configuration);
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
+        options.JsonSerializerOptions.MaxDepth = 32; // Optional: Adjust as needed
+    });
 
 var app = builder.Build();
 

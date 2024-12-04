@@ -3,20 +3,27 @@ using api.DTO;
 using api.Entities;
 using api.Interfaces;
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace api.Data;
 
-public class PhotoRepository(DataContext context) : IPhotoRepository
+public class PhotoRepository(DataContext context, IMapper mapper) : IPhotoRepository
 {
-    public async Task<Photo?> GetPhotoById(int photoId)
+    public async Task<PhotoForApprovalDTO?> GetPhotoById(int photoId)
     {
-        return await context.Photos.FirstOrDefaultAsync(x => x.Id == photoId);
+        return await context.Photos
+        .Where(x => x.Id == photoId)
+        .ProjectTo<PhotoForApprovalDTO>(mapper.ConfigurationProvider)
+        .SingleOrDefaultAsync();
     }
 
-    public async Task<List<Photo>> GetUnapprovedPhotos(string username)
+    public async Task<List<PhotoForApprovalDTO>> GetUnapprovedPhotos(string username)
     {
-        return await context.Photos.Where(x => !x.IsApproved).ToListAsync();
+        return await context.Photos
+            .Where(x => x.AppUser.UserName == username)
+            .ProjectTo<PhotoForApprovalDTO>(mapper.ConfigurationProvider)
+            .ToListAsync();
     }
 
     public void RemovePhoto(Photo photo)
