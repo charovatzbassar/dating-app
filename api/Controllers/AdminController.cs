@@ -51,13 +51,9 @@ public class AdminController(UserManager<AppUser> userManager, IUnitOfWork unitO
 
     [Authorize(Policy = "ModeratePhotoRole")]
     [HttpGet("photos-to-approve")]
-    public async Task<ActionResult<List<Photo>>> GetPhotosForApproval([FromQuery] string username)
+    public async Task<ActionResult<List<Photo>>> GetPhotosForApproval()
     {
-        var user = await unitOfWork.UserRepository.GetUserByUsernameAsync(username);
-
-        if (user == null) return BadRequest("No user found");
-
-        var photosForApproval = await unitOfWork.PhotoRepository.GetUnapprovedPhotos(user.UserName!);
+        var photosForApproval = await unitOfWork.PhotoRepository.GetUnapprovedPhotos();
 
         if (photosForApproval == null) return BadRequest("There are no photos to approve.");
 

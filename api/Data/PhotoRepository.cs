@@ -18,10 +18,10 @@ public class PhotoRepository(DataContext context, IMapper mapper) : IPhotoReposi
         .SingleOrDefaultAsync();
     }
 
-    public async Task<List<PhotoForApprovalDTO>> GetUnapprovedPhotos(string username)
+    public async Task<List<PhotoForApprovalDTO>> GetUnapprovedPhotos()
     {
         return await context.Photos
-            .Where(x => x.AppUser.UserName == username)
+            .Where(x => x.IsApproved == null)
             .ProjectTo<PhotoForApprovalDTO>(mapper.ConfigurationProvider)
             .ToListAsync();
     }

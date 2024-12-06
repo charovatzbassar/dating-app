@@ -22,16 +22,14 @@ export class AdminService {
     );
   }
 
-  getPhotosForApproval(username: string) {
-    return this.http.get<Photo[]>(
-      this.baseUrl + 'admin/photos-to-approve?username=' + username
-    );
+  getPhotosForApproval() {
+    return this.http.get<Photo[]>(this.baseUrl + 'admin/photos-to-approve');
   }
 
-  moderatePhoto(username: string, photoId: string, action: string) {
+  moderatePhoto(photo: Photo, action: string) {
     return this.http.put<boolean>(
       this.baseUrl +
-        `admin/moderate-photo/${username}/${photoId}?action=${action}`,
+        `admin/moderate-photo/${photo.userName!}/${photo.id}?action=${action}`,
       {}
     );
   }

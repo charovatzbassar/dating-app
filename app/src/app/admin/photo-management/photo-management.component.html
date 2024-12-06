@@ -1,1 +1,14 @@
-<p>photo-management works!</p>
+<div>
+  @for (photo of this.photos(); track photo.id) {
+  <div class="col-1">
+    <h2>{{photo.userName || ""}}</h2>
+    <div class="row">
+      <img src="{{ photo.url || 'assets/user.png' }}" alt="" />
+    </div>
+    <div class="row">
+      <button class="btn btn-success mt-2" (click)="moderatePhoto(photo, 'APPROVE')">Approve</button>
+      <button class="btn btn-danger mt-2" (click)="moderatePhoto(photo, 'REJECT')">Reject</button>
+    </div>
+  </div>
+  }
+</div>

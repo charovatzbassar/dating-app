@@ -24,7 +24,8 @@
               {
                 "glob": "**/*",
                 "input": "public"
-              }
+              },
+              "src/assets"
             ],
             "styles": [
               "node_modules/ngx-bootstrap/datepicker/bs-datepicker.css",
