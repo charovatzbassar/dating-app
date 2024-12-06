@@ -84,7 +84,6 @@ public class UsersController(
             }, mapper.Map<PhotoDTO>(photo));
             // Better to return 201 
         }
-
         return BadRequest("Problem adding photo");
     }
 
@@ -97,11 +96,12 @@ public class UsersController(
 
         var photo = user.Photos.FirstOrDefault(x => x.Id == photoId);
 
-        if (photo == null || photo.IsMain || photo.IsApproved == null || photo.IsApproved == false) return BadRequest("This is your main photo, or it does not exist");
+        if (photo == null || photo.IsMain || photo.IsApproved != true) return BadRequest("This is your main photo, or it does not exist, or it is not approved yet.");
 
         var currentMain = user.Photos.FirstOrDefault(x => x.IsMain);
 
         if (currentMain != null) currentMain.IsMain = false;
+
         photo.IsMain = true;
 
         if (await unitOfWork.Complete()) return NoContent();

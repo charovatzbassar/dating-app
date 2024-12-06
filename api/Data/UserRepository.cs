@@ -15,7 +15,6 @@ public class UserRepository(DataContext context, IMapper mapper) : IUserReposito
     public async Task<MemberDTO?> GetMemberAsync(string username, string currentUsername)
     {
         var query = context.Users.AsQueryable();
-        Console.WriteLine(currentUsername + " " + username);
         if (username != currentUsername && currentUsername != "admin")
         {
             query = GetFilteredUsers(query);
@@ -51,6 +50,7 @@ public class UserRepository(DataContext context, IMapper mapper) : IUserReposito
             _ => query.OrderByDescending(x => x.LastActive)
         };
 
+
         return await PagedList<MemberDTO>.CreateAsync(query.ProjectTo<MemberDTO>(mapper.ConfigurationProvider), userParams.PageNumber, userParams.PageSize);
     }
 
@@ -83,6 +83,7 @@ public class UserRepository(DataContext context, IMapper mapper) : IUserReposito
     return query
         .Select(x => new AppUser
         {
+            Id = x.Id,
             UserName = x.UserName,
             DateOfBirth = x.DateOfBirth,
             Interests = x.Interests,
